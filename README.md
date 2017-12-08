@@ -2,9 +2,13 @@
 
 The projects presents Android CI tutorial covering Docker and GitLab
 
+- [Android CI tutorial for Docker and GitLab](#android-ci-tutorial-for-docker-and-gitlab)
+    - [Docker](#docker)
+    - [GitLab](#gitlab)
+        - [Tutorials](#tutorials)
+        - [References to Dockerfiles](#references-to-dockerfiles)
 
-
-## Docker Image
+## Docker
 
 Goal: To create a Docker image that contains the Android SDK command line tools installed in it.
 
