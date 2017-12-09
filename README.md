@@ -145,17 +145,131 @@ The Dockerfile code contains the following,
 
 ![](./images/trigger-a-build-job.png)
 
-- When the build job is completed. Click on **Build Details** to see the status of the build. **Success** indicated the build is successfully built the docker image.
+- When the build job is completed. Click on **Build Details** to see the status of the build. **Success** indicated the build is successfully built the docker image. Now, the Docker image is ready.
 
 ![](./images/build-details.png)
 
 ## GitLab
 
+Follow the instructions on GitLab Documentation about [Creatin .gitlab-ci.yml](https://docs.gitlab.com/ee/ci/quick_start/README.html) file.
 
+A standard template file for Android application development provided by GitLab as follows,
+
+```yml
+# This file is a template, and might need editing before it works on your project.
+# Read more about this script on this blog post https://about.gitlab.com/2016/11/30/setting-up-gitlab-ci-for-android-projects/, by Greyson Parrelli
+image: openjdk:8-jdk
+
+variables:
+  ANDROID_COMPILE_SDK: "25"
+  ANDROID_BUILD_TOOLS: "24.0.0"
+  ANDROID_SDK_TOOLS: "24.4.1"
+
+before_script:
+  - apt-get --quiet update --yes
+  - apt-get --quiet install --yes wget tar unzip lib32stdc++6 lib32z1
+  - wget --quiet --output-document=android-sdk.tgz https://dl.google.com/android/android-sdk_r${ANDROID_SDK_TOOLS}-linux.tgz
+  - tar --extract --gzip --file=android-sdk.tgz
+  - echo y | android-sdk-linux/tools/android --silent update sdk --no-ui --all --filter android-${ANDROID_COMPILE_SDK}
+  - echo y | android-sdk-linux/tools/android --silent update sdk --no-ui --all --filter platform-tools
+  - echo y | android-sdk-linux/tools/android --silent update sdk --no-ui --all --filter build-tools-${ANDROID_BUILD_TOOLS}
+  - echo y | android-sdk-linux/tools/android --silent update sdk --no-ui --all --filter extra-android-m2repository
+  - echo y | android-sdk-linux/tools/android --silent update sdk --no-ui --all --filter extra-google-google_play_services
+  - echo y | android-sdk-linux/tools/android --silent update sdk --no-ui --all --filter extra-google-m2repository
+  - export ANDROID_HOME=$PWD/android-sdk-linux
+  - export PATH=$PATH:$PWD/android-sdk-linux/platform-tools/
+  - chmod +x ./gradlew
+
+stages:
+  - build
+  - test
+
+build:
+  stage: build
+  script:
+    - ./gradlew assembleDebug
+  artifacts:
+    paths:
+    - app/build/outputs/
+
+unitTests:
+  stage: test
+  script:
+    - ./gradlew test
+
+functionalTests:
+  stage: test
+  script:
+    - wget --quiet --output-document=android-wait-for-emulator https://raw.githubusercontent.com/travis-ci/travis-cookbooks/0f497eb71291b52a703143c5cd63a217c8766dc9/community-cookbooks/android-sdk/files/default/android-wait-for-emulator
+    - chmod +x android-wait-for-emulator
+    - echo y | android-sdk-linux/tools/android --silent update sdk --no-ui --all --filter sys-img-x86-google_apis-${ANDROID_COMPILE_SDK}
+    - echo no | android-sdk-linux/tools/android create avd -n test -t android-${ANDROID_COMPILE_SDK} --abi google_apis/x86
+    - android-sdk-linux/tools/emulator64-x86 -avd test -no-window -no-audio &
+    - ./android-wait-for-emulator
+    - adb shell input keyevent 82
+    - ./gradlew cAT
+
+```
+
+![GitLab CI yml android template selection](./images/Gitlab-CI-standard-template.png)
+
+In the template, **openjdk:8-jdk** Docker image is used and all the Android SDK tools and packages are installed during the build job. They are listed in **before_script**.
+
+Instead of downloading and installing Android SDK tools and packages every time during the build job. We can use the Docker image built above in the **.gitLab-ci.yml file**.
+
+The Docker image created above can be used as follows,
+
+        sakarsh/gitlab-ci-android-akarsh-seggemu:latest
+
+By specifying the **Docker hub username/Docker image**. The **:latest** is used to get the latest build from Docker.
+
+Using the Docker image mentioned above in **.gitlab-ci.yml** as follows,
+```yml
+image: sakarsh/gitlab-ci-android-akarsh-seggemu:latest
+
+before_script:
+  - export GRADLE_USER_HOME=`pwd`/.gradle
+  - mkdir -p $GRADLE_USER_HOME
+  - chmod +x ./gradlew
+
+stages:
+  - build
+  - test
+
+build:
+  stage: build
+  script:
+    - ./gradlew assembleDebug
+  artifacts:
+    paths:
+    - app/build/outputs/
+
+unitTests:
+  stage: test
+  script:
+    - ./gradlew test
+
+functionalTests:
+  stage: test
+  script:
+    - wget --quiet --output-document=android-wait-for-emulator https://raw.githubusercontent.com/travis-ci/travis-cookbooks/0f497eb71291b52a703143c5cd63a217c8766dc9/community-cookbooks/android-sdk/files/default/android-wait-for-emulator
+    - chmod +x android-wait-for-emulator
+    - echo y | android-sdk-linux/tools/android --silent update sdk --no-ui --all --filter sys-img-x86-google_apis-${ANDROID_COMPILE_SDK}
+    - echo no | android-sdk-linux/tools/android create avd -n test -t android-${ANDROID_COMPILE_SDK} --abi google_apis/x86
+    - android-sdk-linux/tools/emulator64-x86 -avd test -no-window -no-audio &
+    - ./android-wait-for-emulator
+    - adb shell input keyevent 82
+    - ./gradlew cAT
+
+```
+
+Using an already configured Docker image with Android SDK tools and packages decreases the total build time.
 
 ### Tutorials
 
 - [Dockerfile project](http://dockerfile.github.io/)
+
+- [GitLab CI](https://docs.gitlab.com/ee/ci/)
 
 ### References to Dockerfiles
 
