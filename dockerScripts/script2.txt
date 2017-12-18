@@ -1,0 +1,23 @@
+image: jerbob92/gitlab-ci-android:latest
+
+before_script:
+  - export GRADLE_USER_HOME=`pwd`/.gradle
+  - mkdir -p $GRADLE_USER_HOME
+  - chmod +x ./gradlew
+
+stages:
+  - build
+#  - test
+
+cache:
+  paths:
+  - .gradle/wrapper
+  - .gradle/caches
+    
+build_app:
+  stage: build
+  script:
+    - ./gradlew assembleDebug
+  artifacts: 
+    paths:
+    - app/build/outputs/apk/app-debug.apk
