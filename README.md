@@ -3,10 +3,16 @@
 The projects presents Android CI tutorial covering Docker and GitLab
 
 - [Android CI tutorial for Docker and GitLab](#android-ci-tutorial-for-docker-and-gitlab)
+    - [Scripts](#scripts)
     - [Docker](#docker)
     - [GitLab](#gitlab)
         - [Tutorials](#tutorials)
         - [References to Dockerfiles](#references-to-dockerfiles)
+
+## Scripts
+
+Gitlab scripts - .gitlab-ci.yml
+All the scripts are stored in the folder **GitLabCIScripts**
 
 ## Docker
 
